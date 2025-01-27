@@ -10,6 +10,5 @@ npm install
 npx tsc -p .
 
 cp -r resources dist/
-cp -r src/public dist/src/
 
 echo "Build complete"

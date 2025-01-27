@@ -1,14 +1,20 @@
-import express from "express";
-import fs from "fs";
-import _ from "lodash";
-import path from "path";
+import { isEmpty, sample } from "lodash";
+import { blockedIps } from "./app";
 import { buildAnonymousAuthBundle, buildAuthBundle } from "./authBundleProvider";
 
-const accounts = fs.readFileSync(path.resolve(`resources/accounts.txt`), "utf-8").split("\n");
+import express from "express";
+import fs from "fs";
+import path from "path";
+
+const accounts = fs
+  .readFileSync(path.resolve(`resources/accounts.txt`), "utf-8")
+  .split("\n")
+  .filter(Boolean);
+
 const router = express.Router();
 
 function getRandomAccount() {
-  const account = _.sample(accounts) as string;
+  const account = sample(accounts) as string;
   const [email, aasToken] = account.split(" ");
 
   return { email, aasToken };
@@ -26,26 +32,32 @@ router
       });
   })
 
+  .get("/api/amiblocked/", (req, res) => {
+    let { ip } = req.query as { ip: string };
+
+    ip = ip || req.ip || ""
+
+    const message = (isEmpty(ip) || blockedIps.includes(ip)) ? 'Yes' : 'No';
+
+    res.json({ message });
+  })
+
   .post("/api/auth", async (req, res) => {
     const deviceConfig = req.body;
 
-    if (_.isEmpty(deviceConfig)) {
-      res
+    if (isEmpty(deviceConfig)) {
+      return res
         .status(400)
         .json({
           error: "Missing device configuration",
         });
-
-      return;
     }
 
     try {
       const { email, aasToken } = getRandomAccount();
       const authBUndle = await buildAuthBundle({ email, aasToken, }, deviceConfig)
 
-      res
-        .status(200)
-        .json(authBUndle);
+      res.json(authBUndle);
     } catch (error: any) {
       res
         .status(400)
@@ -59,14 +71,16 @@ router
       const { email, aasToken } = getRandomAccount();
       const authBUndle = await buildAnonymousAuthBundle({ email, aasToken, }, "arm64_xxhdpi")
 
-      res
-        .status(200)
-        .json(authBUndle);
+      res.json(authBUndle);
     } catch (error: any) {
       res
         .status(400)
         .json(error.message || error.code);
     }
+  })
+
+  .all('*', (req, res) => {
+    res.status(444);
   });
 
 export default router;
