@@ -53,3 +53,16 @@ export interface Artwork {
   height: number;
   aspectRatio?: number;
 }
+
+export interface FileNode {
+  name: string
+  path: string
+  isDirectory: boolean
+
+  mimeType?: string
+  contents?: FileNode[]
+  sha256?: string
+  size?: number
+  lastModified?: number
+  createdAt?: number
+}
