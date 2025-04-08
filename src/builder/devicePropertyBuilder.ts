@@ -1,125 +1,111 @@
-import path from "path";
-import { propertiesToJson } from "properties-file";
-import { GooglePlay } from "../compiled-proto";
+import { propertiesToJson } from "properties-file"
+import { DeviceConfig } from "src/types"
+import { GooglePlay } from "../compiled-proto"
 
-import DeviceFeature = GooglePlay.DeviceFeature;
-import DeviceConfigurationProto = GooglePlay.DeviceConfigurationProto;
-import AndroidCheckinRequest = GooglePlay.AndroidCheckinRequest;
-import AndroidBuildProto = GooglePlay.AndroidBuildProto;
-import AndroidCheckinProto = GooglePlay.AndroidCheckinProto;
+import path from "path"
 
-function getDeviceProperties(deviceName: string) {
-  try {
-    return propertiesToJson(
-      path.resolve(`/usr/app/resources/${deviceName}.properties`)
-    );
-  } catch (e) {
-    return propertiesToJson(
-      path.resolve(`resources/${deviceName}.properties`)
-    );
-  }
+import DeviceFeature = GooglePlay.DeviceFeature
+import DeviceConfigurationProto = GooglePlay.DeviceConfigurationProto
+import AndroidCheckinRequest = GooglePlay.AndroidCheckinRequest
+import AndroidBuildProto = GooglePlay.AndroidBuildProto
+import AndroidCheckinProto = GooglePlay.AndroidCheckinProto
+
+function getDeviceConfig(deviceName: string) {
+  return propertiesToJson(path.resolve(`resources/${deviceName}.properties`))
 }
 
-function getUserAgent(properties: Record<string, string>): string {
-  const platforms = properties["Platforms"].split(",").join(";");
+function getUserAgent(deviceConfig: DeviceConfig): string {
+  const platforms = deviceConfig["Platforms"].split(",").join(";")
 
   const deviceProperties = {
     api: 3,
-    versionCode: properties["Vending.version"],
-    sdk: properties["Build.VERSION.SDK_INT"],
-    device: properties["Build.DEVICE"],
-    hardware: properties["Build.HARDWARE"],
-    product: properties["Build.PRODUCT"],
-    platformVersionRelease: properties["Build.VERSION.RELEASE"],
-    model: properties["Build.MODEL"],
-    buildId: properties["Build.ID"],
+    versionCode: deviceConfig["Vending.version"],
+    sdk: deviceConfig["Build.VERSION.SDK_INT"],
+    device: deviceConfig["Build.DEVICE"],
+    hardware: deviceConfig["Build.HARDWARE"],
+    product: deviceConfig["Build.PRODUCT"],
+    platformVersionRelease: deviceConfig["Build.VERSION.RELEASE"],
+    model: deviceConfig["Build.MODEL"],
+    buildId: deviceConfig["Build.ID"],
     isWideScreen: 0,
-    supportedAbis: platforms,
-  };
+    supportedAbis: platforms
+  }
 
   const devicePropertiesString = Object.entries(deviceProperties)
     .map(([k, v]) => `${k}=${v}`)
-    .join(",");
+    .join(",")
 
-  return `Android-Finsky/${properties["Vending.versionString"]} (${devicePropertiesString})`;
+  return `Android-Finsky/${deviceConfig["Vending.versionString"]} (${devicePropertiesString})`
 }
 
-function getDeviceConfigurationProto(properties: Record<string, string>) {
-  const deviceFeatures = properties["Features"]
-    .split(",")
-    .map((val: string) =>
-      DeviceFeature.fromObject({
-        name: val,
-        value: 0,
-      })
-    );
+function getDeviceConfigurationProto(deviceConfig: DeviceConfig) {
+  const deviceFeatures = deviceConfig["Features"].split(",").map((val: string) =>
+    DeviceFeature.fromObject({
+      name: val,
+      value: 0
+    })
+  )
 
   return DeviceConfigurationProto.fromObject({
-    touchScreen: Number(properties["TouchScreen"]),
-    keyboard: Number(properties["Keyboard"]),
-    navigation: Number(properties["Navigation"]),
-    screenLayout: Number(properties["ScreenLayout"]),
-    hasHardKeyboard: Boolean(properties["HasHardKeyboard"]),
-    hasFiveWayNavigation: Boolean(properties["HasFiveWayNavigation"]),
-    lowRamDevice: Boolean(properties["LowRamDevice"]),
-    maxNumOf_CPUCores: Number(properties["MaxNumOfCPUCores"]),
-    totalMemoryBytes: Number(properties["TotalMemoryBytes"]),
-    glEsVersion: Number(properties["GL.Version"]),
-    glExtension: properties["GL.Extensions"].split(","),
-    systemSharedLibrary: properties["SharedLibraries"].split(","),
-    systemAvailableFeature: properties["Features"].split(","),
-    nativePlatform: properties["Platforms"].split(","),
-    screenDensity: Number(properties["Screen.Density"]),
-    screenWidth: Number(properties["Screen.Width"]),
-    screenHeight: Number(properties["Screen.Height"]),
-    systemSupportedLocale: properties["Locales"].split(","),
+    touchScreen: Number(deviceConfig["TouchScreen"]),
+    keyboard: Number(deviceConfig["Keyboard"]),
+    navigation: Number(deviceConfig["Navigation"]),
+    screenLayout: Number(deviceConfig["ScreenLayout"]),
+    hasHardKeyboard: Boolean(deviceConfig["HasHardKeyboard"]),
+    hasFiveWayNavigation: Boolean(deviceConfig["HasFiveWayNavigation"]),
+    lowRamDevice: Boolean(deviceConfig["LowRamDevice"]),
+    maxNumOf_CPUCores: Number(deviceConfig["MaxNumOfCPUCores"]),
+    totalMemoryBytes: Number(deviceConfig["TotalMemoryBytes"]),
+    glEsVersion: Number(deviceConfig["GL.Version"]),
+    glExtension: deviceConfig["GL.Extensions"].split(","),
+    systemSharedLibrary: deviceConfig["SharedLibraries"].split(","),
+    systemAvailableFeature: deviceConfig["Features"].split(","),
+    nativePlatform: deviceConfig["Platforms"].split(","),
+    screenDensity: Number(deviceConfig["Screen.Density"]),
+    screenWidth: Number(deviceConfig["Screen.Width"]),
+    screenHeight: Number(deviceConfig["Screen.Height"]),
+    systemSupportedLocale: deviceConfig["Locales"].split(","),
     deviceClass: 0,
-    deviceFeature: deviceFeatures,
-  });
+    deviceFeature: deviceFeatures
+  })
 }
 
-function getCheckinRequest(properties: Record<string, string>): AndroidCheckinRequest {
+function getCheckinRequest(deviceConfig: DeviceConfig): AndroidCheckinRequest {
   const androidBuildProto = AndroidBuildProto.fromObject({
-    id: properties["Build.FINGERPRINT"],
-    product: properties["Build.HARDWARE"],
-    career: properties["Build.BRAND"],
-    radio: properties["Build.RADIO"],
-    bootloader: properties["Build.BOOTLOADER"],
-    device: properties["Build.DEVICE"],
-    sdkVersion: properties["Build.VERSION.SDK_INT"],
-    model: properties["Build.MODEL"],
-    manufacturer: properties["Build.MANUFACTURER"],
-    buildProduct: properties["Build.PRODUCT"],
-    client: properties["Client"],
-    otsInstalled: Boolean(properties["OtaInstalled"]),
+    id: deviceConfig["Build.FINGERPRINT"],
+    product: deviceConfig["Build.HARDWARE"],
+    career: deviceConfig["Build.BRAND"],
+    radio: deviceConfig["Build.RADIO"],
+    bootloader: deviceConfig["Build.BOOTLOADER"],
+    device: deviceConfig["Build.DEVICE"],
+    sdkVersion: deviceConfig["Build.VERSION.SDK_INT"],
+    model: deviceConfig["Build.MODEL"],
+    manufacturer: deviceConfig["Build.MANUFACTURER"],
+    buildProduct: deviceConfig["Build.PRODUCT"],
+    client: deviceConfig["Client"],
+    otsInstalled: Boolean(deviceConfig["OtaInstalled"]),
     timeStamp: Date.now(),
-    googleServices: properties["GSF.version"],
-  });
+    googleServices: deviceConfig["GSF.version"]
+  })
 
   const androidCheckinProto = AndroidCheckinProto.create({
     build: androidBuildProto,
     lastCheckinMsec: 0,
-    cellOperator: properties["CellOperator"],
-    simOperator: properties["SimOperator"],
-    roaming: properties["Roaming"],
-    userNumber: 0,
-  });
+    cellOperator: deviceConfig["CellOperator"],
+    simOperator: deviceConfig["SimOperator"],
+    roaming: deviceConfig["Roaming"],
+    userNumber: 0
+  })
 
   return AndroidCheckinRequest.create({
     id: 0,
     checkin: androidCheckinProto,
     locale: "en",
-    timeZone: properties["TimeZone"],
+    timeZone: deviceConfig["TimeZone"],
     version: 3,
-    deviceConfiguration: getDeviceConfigurationProto(properties),
-    fragment: 0,
-  });
+    deviceConfiguration: getDeviceConfigurationProto(deviceConfig),
+    fragment: 0
+  })
 }
 
-export {
-  getCheckinRequest,
-  getDeviceConfigurationProto,
-  getDeviceProperties,
-  getUserAgent
-};
-
+export { getCheckinRequest, getDeviceConfig, getDeviceConfigurationProto, getUserAgent }

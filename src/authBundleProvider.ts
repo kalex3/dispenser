@@ -1,178 +1,103 @@
-import axios from "axios";
-
 import {
   getCheckinRequest,
   getDeviceConfigurationProto,
-  getDeviceProperties,
   getUserAgent
-} from "./builder/devicePropertyBuilder";
+} from "./builder/devicePropertyBuilder"
+import { getCheckinHeaders, getDefaultHeaders } from "./builder/headers"
+import { getDefaultParams } from "./builder/params"
+import { GooglePlay } from "./compiled-proto"
+import { AUTH_URL, CHECKIN_URL, TOC_URL, UPLOAD_DEVICE_CONFIG_URL } from "./constants"
+import { AnonymousAuthBundle, AuthBundle, AuthOptions, AuthPayload, DeviceConfig } from "./types"
+import { generateUserProfile } from "./utils"
 
-import {
-  getCheckinHeaders,
-  getDefaultHeaders
-} from "./builder/headers";
+import axios from "axios"
+import _ from "lodash"
 
-import {
-  getDefaultParams
-} from "./builder/params";
+import AndroidCheckinRequest = GooglePlay.AndroidCheckinRequest
+import AndroidCheckinResponse = GooglePlay.AndroidCheckinResponse
+import UploadDeviceConfigRequest = GooglePlay.UploadDeviceConfigRequest
+import ResponseWrapper = GooglePlay.ResponseWrapper
 
-import { GooglePlay } from "./compiled-proto";
+async function checkInDevice(deviceConfig: DeviceConfig) {
+  const androidCheckinRequest = getCheckinRequest(deviceConfig)
+  const encodedAndroidCheckinRequest = AndroidCheckinRequest.encode(androidCheckinRequest).finish()
+  const headers = getCheckinHeaders(deviceConfig)
 
-import { Account, AnonymousAuthBundle, AuthBundle } from "./types";
+  const { data } = await axios.post(CHECKIN_URL, encodedAndroidCheckinRequest, {
+    headers: headers,
+    responseType: "arraybuffer"
+  })
 
-import AndroidCheckinRequest = GooglePlay.AndroidCheckinRequest;
-import AndroidCheckinResponse = GooglePlay.AndroidCheckinResponse;
-import UploadDeviceConfigRequest = GooglePlay.UploadDeviceConfigRequest;
-import ResponseWrapper = GooglePlay.ResponseWrapper;
-
-export async function buildAuthBundle(account: Account, deviceConfig: any): Promise<AuthBundle> {
-  const properties = deviceConfig;
-  const userAgent = getUserAgent(properties);
-
-  const androidCheckinResponse = await checkInDevice(properties);
-  const uploadDeviceConfigResponse = await uploadDeviceConfig(
-    properties,
-    userAgent,
-    androidCheckinResponse
-  );
-
-  const gsfId = androidCheckinResponse.androidId.toString(16);
-  const deviceConfigToken = String(
-    uploadDeviceConfigResponse?.uploadDeviceConfigToken
-  );
-  const deviceConsistencyToken =
-    androidCheckinResponse.deviceCheckinConsistencyToken;
-
-  return await generateAuthBundle(
-    account,
-    gsfId,
-    userAgent,
-    properties,
-    "user",
-    deviceConsistencyToken,
-    deviceConfigToken
-  );
-}
-
-export async function buildAnonymousAuthBundle(account: Account, deviceName: string): Promise<AnonymousAuthBundle> {
-  // Load device config from server
-  const deviceConfig = getDeviceProperties(deviceName);
-
-  const authBundle: AuthBundle = await buildAuthBundle(account, deviceConfig)
-
-  return {
-    email: account.email,
-    auth: authBundle.authToken,
-  }
-}
-
-async function checkInDevice(properties: Record<string, any>) {
-  const androidCheckinRequest =
-    getCheckinRequest(properties);
-  const encodedAndroidCheckinRequest = AndroidCheckinRequest.encode(
-    androidCheckinRequest
-  ).finish();
-
-  const headers = getCheckinHeaders(properties);
-
-  const { data } = await axios.post(
-    "https://android.clients.google.com/checkin",
-    encodedAndroidCheckinRequest,
-    {
-      headers: headers,
-      responseType: "arraybuffer",
-    }
-  );
-
-  return AndroidCheckinResponse.decode(data);
+  return AndroidCheckinResponse.decode(data)
 }
 
 async function uploadDeviceConfig(
-  properties: Record<string, any>,
   userAgent: string,
+  locale: string,
+  deviceConfig: DeviceConfig,
   androidCheckinResponse: AndroidCheckinResponse
 ) {
-  const deviceConfigurationProto = getDeviceConfigurationProto(properties);
+  const deviceConfigurationProto = getDeviceConfigurationProto(deviceConfig)
   const uploadDeviceConfigRequest = UploadDeviceConfigRequest.create({
-    deviceConfiguration: deviceConfigurationProto,
-  });
-  const encodedUploadDeviceConfigRequest = UploadDeviceConfigRequest.encode(
-    uploadDeviceConfigRequest
-  ).finish();
+    deviceConfiguration: deviceConfigurationProto
+  })
+  const encodedUploadDeviceConfigRequest =
+    UploadDeviceConfigRequest.encode(uploadDeviceConfigRequest).finish()
 
-  const payload = {
+  const payload: AuthPayload = {
     userAgent,
     deviceConsistencyToken: androidCheckinResponse.deviceCheckinConsistencyToken,
     gsfId: androidCheckinResponse.androidId.toString(16),
-    bearerToken: "",
-  };
+    deviceConfigToken: "",
+    dfeCookie: ""
+  }
 
-  const headers = getDefaultHeaders(payload);
-  headers["Content-Type"] = "application/x-protobuf";
+  const headers = getDefaultHeaders(payload, locale)
+  headers["Content-Type"] = "application/x-protobuf"
 
-  const { data } = await axios.post(
-    "https://android.clients.google.com/fdfe/uploadDeviceConfig",
-    encodedUploadDeviceConfigRequest,
-    {
-      headers,
-      responseType: "arraybuffer",
-    },
-  );
+  const { data } = await axios.post(UPLOAD_DEVICE_CONFIG_URL, encodedUploadDeviceConfigRequest, {
+    headers,
+    responseType: "arraybuffer"
+  })
 
-  return ResponseWrapper.decode(data)?.payload?.uploadDeviceConfigResponse;
+  return ResponseWrapper.decode(data)?.payload?.uploadDeviceConfigResponse
 }
 
 async function generateAuthBundle(
-  account: Account,
-  gsfId: string,
-  userAgent: string,
-  properties: any,
-  deviceName: string,
-  consistencyToken: string,
-  configToken: string
+  authBundleOptions: AuthOptions,
+  authPayload: AuthPayload
 ): Promise<AuthBundle> {
-  const authUserAgentString = `GoogleAuth/1.4 (${properties["Build.DEVICE"]} ${properties["Build.ID"]})`;
+  const { account, deviceConfig, locale } = authBundleOptions
+  const { gsfId, userAgent, deviceConsistencyToken, deviceConfigToken } = authPayload
+
+  const authUserAgentString = `GoogleAuth/1.4 (${deviceConfig["Build.DEVICE"]} ${deviceConfig["Build.ID"]})`
   const headers = {
     app: "com.google.android.gms",
     device: gsfId,
-    "User-Agent": authUserAgentString,
-  };
+    "User-Agent": authUserAgentString
+  }
 
-  const params = getDefaultParams({
-    email: account.email,
-    aasToken: account.aasToken,
-    gsfId: gsfId,
-  }, properties);
-
-  const { data } = await axios.post(
-    "https://android.clients.google.com/auth",
+  const params = getDefaultParams(
     {
-
+      email: account.email,
+      aasToken: account.aasToken,
+      gsfId: gsfId
     },
-    {
-      headers: headers,
-      params: params,
-      responseType: "text",
-    }
-  );
-
-  const authBundle = data
-    .split("\n")
-    .map((v: any) => v.split("="))
-    // @ts-ignore
-    .reduce((acc, [key, value]) => {
-      acc[key] = value;
-      return acc;
-    }, {});
-
-  const tocResponse = await acceptTOC(
-    {
-      userAgent: userAgent,
-      deviceConsistencyToken: consistencyToken,
-      gsfId: gsfId,
-      bearerToken: authBundle.Auth
-    }
+    deviceConfig,
+    locale
   )
+
+  const { data } = await axios.post(AUTH_URL, undefined, {
+    headers: headers,
+    params: params,
+    responseType: "text"
+  })
+
+  const authBundle: Record<string, string> = _.fromPairs(
+    data.split("\n").map((value: string) => value.split("="))
+  )
+
+  const tocResponse = await acceptTOC(authPayload, authBundle.Auth, locale)
 
   const dfeCookie = String(tocResponse?.cookie)
 
@@ -181,45 +106,72 @@ async function generateAuthBundle(
     ac2dmToken: "",
     androidCheckInToken: "",
     authToken: authBundle.Auth,
-    deviceCheckInConsistencyToken: consistencyToken,
-    deviceConfigToken: configToken,
+    deviceCheckInConsistencyToken: deviceConsistencyToken,
+    deviceConfigToken,
     dfeCookie,
     experimentsConfigToken: "",
     gsfId,
-    isAnonymous: true,
-    locale: "en_US",
+    isAnonymous: false,
+    locale: authBundleOptions.locale,
     tokenDispenserUrl: "https://auroraoss.com/api/auth",
     email: account.email,
     deviceInfoProvider: {
       authUserAgentString,
-      localeString: "en_US",
+      localeString: deviceConfig.locale,
       mccMnc: "310260",
-      playServicesVersion: properties["GSF.version"],
+      playServicesVersion: deviceConfig["GSF.version"],
       userAgentString: userAgent,
-      sdkVersion: properties["Build.VERSION.SDK_INT"],
-      properties,
+      sdkVersion: deviceConfig["Build.VERSION.SDK_INT"],
+      properties: deviceConfig
     },
-    userProfile: {
-      name: "Anonymous",
-      email: "anonymous@gmail.com",
-      artwork: {
-        url: "https://ssl.gstatic.com/docs/common/profile/llama_lg.png",
-        type: 4,
-        width: 129,
-        height: 129,
-      },
-    }
-  };
+    userProfile: generateUserProfile()
+  }
 }
 
-async function acceptTOC(payload: Record<string, any>): Promise<GooglePlay.ITocResponse | null | undefined> {
-  const { data } = await axios.get(
-    "https://android.clients.google.com/fdfe/toc",
-    {
-      headers: getDefaultHeaders(payload),
-      responseType: "arraybuffer",
-    }
-  );
+async function acceptTOC(
+  payload: AuthPayload,
+  bearerToken: string,
+  locale: string
+): Promise<GooglePlay.ITocResponse | null | undefined> {
+  const { data } = await axios.get(TOC_URL, {
+    headers: getDefaultHeaders(payload, locale, bearerToken),
+    responseType: "arraybuffer"
+  })
 
-  return ResponseWrapper.decode(data)?.payload?.tocResponse;
+  return ResponseWrapper.decode(data)?.payload?.tocResponse
 }
+
+async function buildAuthBundle(options: AuthOptions): Promise<AuthBundle> {
+  const { deviceConfig, locale } = options
+
+  const userAgent = getUserAgent(deviceConfig)
+
+  const androidCheckinResponse = await checkInDevice(deviceConfig)
+  const uploadDeviceConfigResponse = await uploadDeviceConfig(
+    userAgent,
+    locale,
+    deviceConfig,
+    androidCheckinResponse
+  )
+
+  const authPayload: AuthPayload = {
+    userAgent,
+    gsfId: androidCheckinResponse.androidId.toString(16),
+    deviceConsistencyToken: androidCheckinResponse.deviceCheckinConsistencyToken,
+    deviceConfigToken: uploadDeviceConfigResponse?.uploadDeviceConfigToken as string,
+    dfeCookie: ""
+  }
+
+  return await generateAuthBundle(options, authPayload)
+}
+
+async function buildAnonymousAuthBundle(options: AuthOptions): Promise<AnonymousAuthBundle> {
+  const authBundle: AuthBundle = await buildAuthBundle(options)
+
+  return {
+    email: options.account.email,
+    auth: authBundle.authToken
+  }
+}
+
+export { buildAnonymousAuthBundle, buildAuthBundle }

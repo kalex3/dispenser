@@ -1,4 +1,8 @@
-function getDefaultParams(payload: Record<string, string>, properties: any): Record<string, string> {
+function getDefaultParams(
+  payload: Record<string, string>,
+  properties: any,
+  locale: string
+): Record<string, string> {
   return {
     app: "com.android.vending",
     oauth2_foreground: "1",
@@ -12,13 +16,11 @@ function getDefaultParams(payload: Record<string, string>, properties: any): Rec
     sdk_version: `${properties["Build.VERSION.SDK_INT"]}`,
     callerPkg: "com.google.android.gms",
     device_country: "IN",
-    lang: "en",
+    lang: locale,
     androidId: payload.gsfId,
     callerSig: "38918a453d07199354f8b19af05ec6562ced5788",
     service: "oauth2:https://www.googleapis.com/auth/googleplay"
-  };
+  }
 }
 
-export {
-  getDefaultParams
-};
+export { getDefaultParams }

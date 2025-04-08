@@ -1,31 +1,28 @@
-import { isEmpty, sample } from "lodash"
-import { blockedIps } from "./app"
+import { isEmpty } from "lodash"
+import { blockedIps, lruQueue } from "./app"
 import { buildAnonymousAuthBundle, buildAuthBundle } from "./authBundleProvider"
+import { getDeviceConfig } from "./builder/devicePropertyBuilder"
 import { buildRoot } from "./builder/fileTreeBuilder"
 
-import dotenv from "dotenv"
 import express from "express"
-import fs from "fs"
-import path from "path"
-
-dotenv.config()
-
-const accounts = fs
-  .readFileSync(path.resolve(`resources/accounts.txt`), "utf-8")
-  .split("\n")
-  .filter(Boolean)
+import _ from "lodash"
 
 const router = express.Router()
 
-function getRandomAccount() {
-  const account = sample(accounts) as string
+function getNextAccount() {
+  if (_.isEmpty(lruQueue)) {
+    throw new Error("No accounts available")
+  }
+
+  const account = lruQueue.shift() as string
+  lruQueue.push(account)
+
   const [email, aasToken] = account.split(" ")
 
   return { email, aasToken }
 }
 
 router
-  // Health
   .get("/api/health", (req, res) => {
     res.status(200).json({
       status: "Aurora Dispenser is alive!",
@@ -45,17 +42,23 @@ router
   })
 
   .post("/api/auth", async (req, res) => {
-    const deviceConfig = req.body
-
-    if (isEmpty(deviceConfig)) {
-      return res.status(400).json({
-        error: "Missing device configuration"
-      })
-    }
-
     try {
-      const { email, aasToken } = getRandomAccount()
-      const authBUndle = await buildAuthBundle({ email, aasToken }, deviceConfig)
+      const { locale = "en" } = req.query as { locale: string }
+      const deviceConfig = req.body
+
+      if (isEmpty(deviceConfig)) {
+        return res.status(400).json({
+          error: "Missing device configuration"
+        })
+      }
+
+      const { email, aasToken } = getNextAccount()
+
+      const authBUndle = await buildAuthBundle({
+        account: { email, aasToken },
+        deviceConfig,
+        locale
+      })
 
       res.json(authBUndle)
     } catch (error: any) {
@@ -63,11 +66,17 @@ router
     }
   })
 
-  // Dispense
   .get("/api/auth", async (req, res) => {
     try {
-      const { email, aasToken } = getRandomAccount()
-      const authBUndle = await buildAnonymousAuthBundle({ email, aasToken }, "arm64_xxhdpi")
+      const { locale = "en" } = req.query as { locale: string }
+      const { email, aasToken } = getNextAccount()
+
+      const deviceConfig = getDeviceConfig("arm64_xxhdpi")
+      const authBUndle = await buildAnonymousAuthBundle({
+        account: { email, aasToken },
+        deviceConfig,
+        locale
+      })
 
       res.json(authBUndle)
     } catch (error: any) {
@@ -77,7 +86,7 @@ router
 
   .get("/api/files", async (req, res) => {
     const path = process.env.DOWNLOAD_URL
-    
+
     if (!path) {
       return res.status(400).json({
         error: "Missing download directory URL"
