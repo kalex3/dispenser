@@ -85,21 +85,25 @@ router
   })
 
   .get("/api/files", async (req, res) => {
-    const path = process.env.DOWNLOAD_URL
+    try {
+      const path = process.env.DOWNLOAD_URL
 
-    if (!path) {
-      return res.status(400).json({
-        error: "Missing download directory URL"
+      if (!path) {
+        return res.status(400).json({
+          error: "Missing download directory URL"
+        })
+      }
+
+      const fileTree = buildRoot(path, {
+        maxDepth: 8,
+        maxFiles: 500,
+        allowedExtensions: [".apk", ".json"]
       })
+
+      res.json(fileTree)
+    } catch (error: any) {
+      res.status(400).json(error.message || error.code)
     }
-
-    const fileTree = buildRoot(path, {
-      maxDepth: 8,
-      maxFiles: 500,
-      allowedExtensions: [".apk", ".json"]
-    })
-
-    res.json(fileTree)
   })
 
   .all("*", (req, res) => {
