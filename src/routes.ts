@@ -22,6 +22,19 @@ function getNextAccount() {
   return { email, aasToken }
 }
 
+async function bailOut(
+  req: express.Request,
+  res: express.Response,
+  opts: {
+    code: number
+    message: string
+  }
+) {
+  const { code = 400, message = "Something went wrong!" } = opts
+
+  res.status(code).json({ error: message })
+}
+
 router
   .get("/api/health", (req, res) => {
     res.status(200).json({
@@ -47,8 +60,9 @@ router
       const deviceConfig = req.body
 
       if (isEmpty(deviceConfig)) {
-        return res.status(400).json({
-          error: "Missing device configuration"
+        return bailOut(req, res, {
+          code: 400,
+          message: "Missing device configuration"
         })
       }
 
@@ -62,7 +76,10 @@ router
 
       res.json(authBUndle)
     } catch (error: any) {
-      res.status(400).json(error.message || error.code)
+      return bailOut(req, res, {
+        code: 500,
+        message: error.message || error.code
+      })
     }
   })
 
@@ -80,7 +97,10 @@ router
 
       res.json(authBUndle)
     } catch (error: any) {
-      res.status(400).json(error.message || error.code)
+      return bailOut(req, res, {
+        code: 500,
+        message: error.message || error.code
+      })
     }
   })
 
@@ -89,8 +109,9 @@ router
       const path = process.env.DOWNLOAD_URL
 
       if (!path) {
-        return res.status(400).json({
-          error: "Missing download directory URL"
+        return bailOut(req, res, {
+          code: 500,
+          message: "No download path configured"
         })
       }
 
@@ -102,7 +123,34 @@ router
 
       res.json(fileTree)
     } catch (error: any) {
-      res.status(400).json(error.message || error.code)
+      return bailOut(req, res, {
+        code: 500,
+        message: error.message || error.code
+      })
+    }
+  })
+
+  .get("/api/wiki", async (req, res) => {
+    try {
+      const { url } = req.query as { url: string }
+
+      if (!url || !url.startsWith("https://gitlab.com/AuroraOSS/aurorawiki")) {
+        return bailOut(req, res, {
+          code: 404,
+          message: "Missing / Invalid URL"
+        })
+      }
+
+      const response = await fetch(url)
+      const text = await response.text()
+
+      res.set("Content-Type", "text/markdown")
+      res.send(text)
+    } catch (error: any) {
+      return bailOut(req, res, {
+        code: 500,
+        message: error.message || error.code
+      })
     }
   })
 
