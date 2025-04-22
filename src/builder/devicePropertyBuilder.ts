@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2024-2025 Aurora OSS
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 import { propertiesToJson } from "properties-file"
 import { DeviceConfig } from "src/types"
 import { GooglePlay } from "../compiled-proto"

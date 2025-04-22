@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2025 Aurora OSS
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 import { isEmpty } from "lodash"
 import { blockedIps, lruQueue } from "./app"
 import { buildAnonymousAuthBundle, buildAuthBundle } from "./authBundleProvider"

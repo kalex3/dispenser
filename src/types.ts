@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2024-2025 Aurora OSS
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 export interface AuthBundle {
   aasToken?: string
   ac2dmToken?: string
