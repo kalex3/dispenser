@@ -123,7 +123,7 @@ router
       const fileTree = buildRoot(path, {
         maxDepth: 8,
         maxFiles: 500,
-        allowedExtensions: [".apk", ".json"]
+        allowedExtensions: [".apk", ".json", ".properties"]
       })
 
       res.json(fileTree)
