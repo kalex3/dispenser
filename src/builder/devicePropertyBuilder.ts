@@ -4,8 +4,8 @@
  */
 
 import { propertiesToJson } from "properties-file"
-import { DeviceConfig } from "src/types"
 import { GooglePlay } from "../compiled-proto"
+import { DeviceConfig } from "../types"
 
 import path from "path"
 

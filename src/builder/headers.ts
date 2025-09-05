@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { AuthPayload, DeviceConfig } from "src/types"
+import { AuthPayload, DeviceConfig } from "../types"
 import { getUserAgent } from "./devicePropertyBuilder"
 
 function getCheckinHeaders(deviceConfig: DeviceConfig): Record<string, string> {
