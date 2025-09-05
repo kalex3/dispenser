@@ -61,9 +61,7 @@ const rateLimiter = rateLimit({
   legacyHeaders: false,
   statusCode: 429,
   message: "Too many requests, try again later.",
-  skip: (req) => {
-    return req.url === "/api/health" || req.url.startsWith("/api/wiki")
-  }
+  skip: (req) => !req.url.startsWith("/api/auth")
 })
 
 async function init() {
