@@ -9,10 +9,14 @@ import { buildAnonymousAuthBundle, buildAuthBundle } from "./authBundleProvider"
 import { getDeviceConfig } from "./builder/devicePropertyBuilder"
 import { buildRoot } from "./builder/fileTreeBuilder"
 
+import dayjs from "dayjs"
 import express from "express"
 import _ from "lodash"
 
 const router = express.Router()
+
+let cachedFileTree: any = null
+let cacheTimestamp: dayjs.Dayjs | null = null
 
 function getNextAccount() {
   if (_.isEmpty(lruQueue)) {
@@ -111,7 +115,7 @@ router
 
   .get("/api/files", async (req, res) => {
     try {
-      const path = process.env.DOWNLOAD_URL
+      const path = "/Users/whyorean/Downloads"
 
       if (!path) {
         return bailOut(req, res, {
@@ -120,13 +124,17 @@ router
         })
       }
 
-      const fileTree = buildRoot(path, {
-        maxDepth: 8,
-        maxFiles: 500,
-        allowedExtensions: [".apk", ".json", ".properties"]
-      })
+      const now = dayjs()
+      if (!cachedFileTree || !cacheTimestamp || now.diff(cacheTimestamp, "minute") >= 15) {
+        cachedFileTree = buildRoot(path, {
+          maxDepth: 8,
+          maxFiles: 500,
+          allowedExtensions: [".apk", ".json", ".properties"]
+        })
+        cacheTimestamp = now
+      }
 
-      res.json(fileTree)
+      res.json(cachedFileTree)
     } catch (error: any) {
       return bailOut(req, res, {
         code: 500,
