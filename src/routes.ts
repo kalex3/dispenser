@@ -115,7 +115,7 @@ router
 
   .get("/api/files", async (req, res) => {
     try {
-      const path = "/Users/whyorean/Downloads"
+      const path = process.env.DOWNLOAD_URL
 
       if (!path) {
         return bailOut(req, res, {
