@@ -96,8 +96,8 @@ router
     }
   })
 
-  .all("*", (req, res) => {
-    res.status(444)
+  .all("/{*splat}", (req, res) => {
+    res.sendStatus(444)
   })
 
 export default router
