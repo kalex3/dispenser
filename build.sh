@@ -11,6 +11,9 @@ sh cleanup.sh
 # Install dependencies
 npm install
 
+# Generate protos
+[ ! -e src/compiled-proto.js ] && npm run compile-proto
+
 # Build
 npx tsc -p .
 

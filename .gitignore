@@ -42,3 +42,7 @@ resources/accounts.txt
 
 # Ignore any zip files
 **/*.zip
+
+# Ignore compiled protobuf files
+src/compiled-proto.js
+src/compiled-proto.d.ts
