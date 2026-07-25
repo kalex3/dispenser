@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { rateLimit } from "express-rate-limit"
 import { createStream } from "rotating-file-stream"
 
 import cors from "cors"
@@ -36,16 +35,6 @@ const blockedLogStream = createStream(() => dayjs().format("YYYY-MM-DD") + ".log
   path: path.join(__dirname, "..", "logs", "blocked")
 })
 
-const rateLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000, // 10 minutes
-  limit: 5, // Allowed requests per window.
-  standardHeaders: "draft-8",
-  legacyHeaders: false,
-  statusCode: 429,
-  message: "Too many requests, try again later.",
-  skip: (req) => !req.url.startsWith("/api/auth")
-})
-
 async function init() {
   const app = express()
   app.use(express.json())
@@ -64,9 +53,6 @@ async function init() {
 
   // TODO: Improve it to avoid abuse by malicious users
   app.set("trust proxy", 1)
-
-  // Set up rate limiter
-  app.use(rateLimiter)
 
   // Use helmet to secure Express with various HTTP headers
   app.use(helmet())
