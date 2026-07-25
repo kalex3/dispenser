@@ -1,6 +1,6 @@
 {
   "name": "dispenser",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A NodeJS service to generate and dispense anonymous AuthTokens to access Google Play Store",
   "main": "app.js",
   "author": "Rahul Kumar Patel",
