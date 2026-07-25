@@ -122,7 +122,10 @@ async function init() {
   // Add custom routes
   app.use(routes)
 
-  app.listen(3000, "localhost", () => {
+  const port = Number(process.env.PORT) || 3000
+  const host = process.env.HOST || "localhost"
+
+  app.listen(port, host, () => {
     console.log("\n", ascii(pkg.name, 80), "\n")
     console.log(`Version: ${pkg.version}`)
     console.log("Available Accounts: ", accounts.length)
@@ -143,3 +146,4 @@ function gracefullyExit() {
 }
 
 init()
+

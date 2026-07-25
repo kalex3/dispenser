@@ -1,0 +1,9 @@
+*
+!package.json
+!tsconfig.json
+!src/
+!src/**
+!resources/
+!resources/**
+resources/accounts.txt
+resources/blocked_ips.txt
