@@ -10,8 +10,8 @@ import {
 } from "./builder/devicePropertyBuilder"
 import { getCheckinHeaders, getDefaultHeaders } from "./builder/headers"
 import { getDefaultParams } from "./builder/params"
-import { GooglePlay } from "./compiled-proto"
 import { AUTH_URL, CHECKIN_URL, TOC_URL, UPLOAD_DEVICE_CONFIG_URL } from "./constants"
+import { GooglePlay } from "./google_play"
 import { AnonymousAuthBundle, AuthBundle, AuthOptions, AuthPayload, DeviceConfig } from "./types"
 import { generateUserProfile } from "./utils"
 

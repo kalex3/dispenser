@@ -44,5 +44,5 @@ resources/accounts.txt
 **/*.zip
 
 # Ignore compiled protobuf files
-src/compiled-proto.js
-src/compiled-proto.d.ts
+src/google_play.js
+src/google_play.d.ts

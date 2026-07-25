@@ -4,7 +4,7 @@
  */
 
 import { getProperties } from "properties-file"
-import { GooglePlay } from "../compiled-proto"
+import { GooglePlay } from "../google_play"
 import { DeviceConfig } from "../types"
 
 import fs from "fs"

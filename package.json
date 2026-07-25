@@ -10,7 +10,7 @@
     "build": "sh build.sh",
     "cleanup": "sh cleanup.sh",
     "dispenser": "node --max-old-space-size=4096 dist/app.js",
-    "compile-proto": "pbjs -t static-module -w commonjs -o ./src/compiled-proto.js ./google_play.proto && pbts -o ./src/compiled-proto.d.ts ./src/compiled-proto.js"
+    "compile-proto": "pbjs -t static-module -w commonjs -d -o ./src/google_play.js ./google_play.proto"
   },
   "keywords": [
     "Aurora",
