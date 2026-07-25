@@ -16,7 +16,6 @@ import { AnonymousAuthBundle, AuthBundle, AuthOptions, AuthPayload, DeviceConfig
 import { generateUserProfile } from "./utils"
 
 import axios from "axios"
-import _ from "lodash"
 
 import AndroidCheckinRequest = GooglePlay.AndroidCheckinRequest
 import AndroidCheckinResponse = GooglePlay.AndroidCheckinResponse
@@ -98,7 +97,7 @@ async function generateAuthBundle(
     responseType: "text"
   })
 
-  const authBundle: Record<string, string> = _.fromPairs(
+  const authBundle: Record<string, string> = Object.fromEntries(
     data.split("\n").map((value: string) => value.split("="))
   )
 

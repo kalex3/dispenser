@@ -3,18 +3,16 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { isEmpty } from "lodash"
 import { lruQueue } from "./app"
 import { buildAnonymousAuthBundle, buildAuthBundle } from "./authBundleProvider"
 import { getDeviceConfig } from "./builder/devicePropertyBuilder"
 
 import express from "express"
-import _ from "lodash"
 
 const router = express.Router()
 
 function getNextAccount() {
-  if (_.isEmpty(lruQueue)) {
+  if (lruQueue.length == 0) {
     throw new Error("No accounts available")
   }
 
@@ -53,7 +51,7 @@ router
       const { locale = "en" } = req.query as { locale: string }
       const deviceConfig = req.body
 
-      if (isEmpty(deviceConfig)) {
+      if (Object.keys(deviceConfig).length == 0) {
         return bailOut(req, res, {
           code: 400,
           message: "Missing device configuration"

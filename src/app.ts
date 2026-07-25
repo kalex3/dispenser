@@ -12,7 +12,6 @@ import dotenv from "dotenv"
 import express from "express"
 import fs from "fs"
 import helmet from "helmet"
-import _ from "lodash"
 import morgan from "morgan"
 import path from "path"
 import pkg from "../package.json"
@@ -25,7 +24,7 @@ export const accounts = fs
   .split("\n")
   .filter(Boolean)
 
-export const lruQueue = _.clone(accounts)
+export const lruQueue = [...accounts]
 
 const accessLogStream = createStream(() => dayjs().format("YYYY-MM-DD") + ".log", {
   interval: "1d",
