@@ -12,5 +12,4 @@ services:
     #   - PORT=3000
     # volumes:
     #   - ./resources/accounts.txt:/app/resources/accounts.txt:ro
-    #   - ./resources/blocked_ips.txt:/app/resources/blocked_ips.txt:ro
     #   - ./logs:/app/logs
