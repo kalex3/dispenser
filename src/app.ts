@@ -10,7 +10,6 @@ import cors from "cors"
 import dayjs from "dayjs"
 import dotenv from "dotenv"
 import express from "express"
-import figlet from "figlet"
 import fs from "fs"
 import helmet from "helmet"
 import _ from "lodash"
@@ -27,16 +26,6 @@ export const accounts = fs
   .filter(Boolean)
 
 export const lruQueue = _.clone(accounts)
-
-function ascii(message: string, width: number = 80): string {
-  return figlet.textSync(message, {
-    font: "Standard",
-    horizontalLayout: "default",
-    verticalLayout: "default",
-    width: width,
-    whitespaceBreak: true
-  })
-}
 
 const accessLogStream = createStream(() => dayjs().format("YYYY-MM-DD") + ".log", {
   interval: "1d",
@@ -106,22 +95,14 @@ async function init() {
   app.use(routes)
 
   app.listen(3000, "localhost", () => {
-    console.log("\n", ascii(pkg.name, 80), "\n")
+    console.log(pkg.name)
     console.log(`Version: ${pkg.version}`)
     console.log("Available Accounts: ", accounts.length)
   })
 
-  process.on("SIGINT", () => gracefullyExit())
-  process.on("SIGTERM", () => gracefullyExit())
   process.on("uncaughtException", (error) => {
     console.error("Uncaught exception:", error)
   })
-}
-
-function gracefullyExit() {
-  console.log()
-  console.log(ascii("Bye!", 40))
-  process.exit()
 }
 
 init()
