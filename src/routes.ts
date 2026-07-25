@@ -4,7 +4,7 @@
  */
 
 import { isEmpty } from "lodash"
-import { blockedIps, lruQueue } from "./app"
+import { lruQueue } from "./app"
 import { buildAnonymousAuthBundle, buildAuthBundle } from "./authBundleProvider"
 import { getDeviceConfig } from "./builder/devicePropertyBuilder"
 
@@ -46,16 +46,6 @@ router
       uptime: process.uptime(),
       dateTime: new Date().toISOString()
     })
-  })
-
-  .get("/api/amiblocked/", (req, res) => {
-    let { ip } = req.query as { ip: string }
-
-    ip = ip || req.ip || ""
-
-    const message = isEmpty(ip) || blockedIps.includes(ip) ? "Yes" : "No"
-
-    res.json({ message })
   })
 
   .post("/api/auth", async (req, res) => {

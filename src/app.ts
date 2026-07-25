@@ -4,7 +4,6 @@
  */
 
 import { rateLimit } from "express-rate-limit"
-import { isEmpty } from "lodash"
 import { createStream } from "rotating-file-stream"
 
 import cors from "cors"
@@ -21,11 +20,6 @@ import pkg from "../package.json"
 import routes from "./routes"
 
 dotenv.config()
-
-export const blockedIps = fs
-  .readFileSync(path.resolve("resources/blocked_ips.txt"), "utf8")
-  .split("\n")
-  .filter(Boolean)
 
 export const accounts = fs
   .readFileSync(path.resolve(`resources/accounts.txt`), "utf-8")
@@ -108,17 +102,6 @@ async function init() {
     })
   )
 
-  // Block all flagged IPs
-  app.use((req, res, next) => {
-    const clientIp = req.ip || req.socket.remoteAddress || ""
-
-    if (isEmpty(clientIp) || blockedIps.includes(clientIp)) {
-      return res.status(403)
-    }
-
-    next()
-  })
-
   // Add custom routes
   app.use(routes)
 
@@ -126,7 +109,6 @@ async function init() {
     console.log("\n", ascii(pkg.name, 80), "\n")
     console.log(`Version: ${pkg.version}`)
     console.log("Available Accounts: ", accounts.length)
-    console.log("Blocked IPs: ", blockedIps.length, "\n")
   })
 
   process.on("SIGINT", () => gracefullyExit())
