@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { propertiesToJson } from "properties-file"
+import { getProperties } from "properties-file"
 import { GooglePlay } from "../compiled-proto"
 import { DeviceConfig } from "../types"
 
+import fs from "fs"
 import path from "path"
 
 import DeviceFeature = GooglePlay.DeviceFeature
@@ -16,7 +17,7 @@ import AndroidBuildProto = GooglePlay.AndroidBuildProto
 import AndroidCheckinProto = GooglePlay.AndroidCheckinProto
 
 function getDeviceConfig(deviceName: string) {
-  return propertiesToJson(path.resolve(`resources/${deviceName}.properties`))
+  return getProperties(fs.readFileSync(path.resolve(`resources/${deviceName}.properties`)))
 }
 
 function getUserAgent(deviceConfig: DeviceConfig): string {

@@ -37,11 +37,12 @@ tmp/
 # Ignore secrets
 resources/accounts.txt
 
-# Ignore blocked IPs
-resources/blocked_ips.txt
-
 # Ignore any logs
 **/*.log
 
 # Ignore any zip files
 **/*.zip
+
+# Ignore compiled protobuf files
+src/compiled-proto.js
+src/compiled-proto.d.ts

@@ -4,6 +4,7 @@
     "**/dist": true,
     "**/build": true,
     "**/coverage": true,
+    "**/logs": true,
     "**/.git": true
   },
 
