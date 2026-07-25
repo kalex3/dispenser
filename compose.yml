@@ -1,0 +1,15 @@
+services:
+  dispenser:
+    build: .
+    image: dispenser:latest
+    container_name: dispenser
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    # environment:
+    #   - NODE_ENV=production
+    #   - HOST=0.0.0.0
+    #   - PORT=3000
+    volumes:
+      - ./resources/accounts.txt:/app/resources/accounts.txt:ro
+    #   - ./logs:/logs

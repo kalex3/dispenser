@@ -13,7 +13,6 @@ import fs from "fs"
 import helmet from "helmet"
 import morgan from "morgan"
 import path from "path"
-import pkg from "../package.json"
 import routes from "./routes"
 
 dotenv.config()
@@ -79,15 +78,22 @@ async function init() {
   // Add custom routes
   app.use(routes)
 
-  app.listen(3000, "localhost", () => {
-    console.log(pkg.name)
-    console.log(`Version: ${pkg.version}`)
+  const port = Number(process.env.PORT) || 3000
+  const host = process.env.HOST || "localhost"
+
+  app.listen(port, host, () => {
     console.log("Available Accounts: ", accounts.length)
   })
 
+  process.on("SIGINT", () => gracefullyExit())
+  process.on("SIGTERM", () => gracefullyExit())
   process.on("uncaughtException", (error) => {
     console.error("Uncaught exception:", error)
   })
+}
+
+function gracefullyExit() {
+  process.exit()
 }
 
 init()
