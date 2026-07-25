@@ -2,15 +2,12 @@ FROM node:alpine AS builder
 
 WORKDIR /build
 
-COPY package.json ./
+COPY . .
 
 RUN --mount=type=cache,target=/root/.npm npm install --no-audit --no-fund
 
-COPY tsconfig.json ./
-COPY src ./src
-COPY resources ./resources
-
-RUN npx tsc -p . --sourceMap false \
+RUN npm run compile-proto \
+    && npx tsc -p . --sourceMap false \
     && cp -r resources dist/ \
     && npm prune --omit=dev --omit=optional \
     && npm cache clean --force \

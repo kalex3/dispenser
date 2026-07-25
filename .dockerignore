@@ -5,4 +5,5 @@
 !src/**
 !resources/
 !resources/**
+!google_play.proto
 resources/accounts.txt
