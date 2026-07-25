@@ -34,10 +34,10 @@ sh build.sh
 
 5. Run!!
 ```
-npm start dist/src.app.js
+npm run dispenser
 
 # Alternatively you can also use pm2 to run the service
-pm2 start dist/src/app.js --name my-dispenser
+pm2 start dist/app.js --name my-dispenser
 ```
 
 ## Usage
