@@ -18,7 +18,12 @@ cd AuroraDispenser
 npm install
 ```
 
-3. Add accounts
+3. Build proto files
+```
+npm run compile-proto
+```
+
+4. Add accounts
 ```
 Create a txt file as accounts.txt in resources directory
 
@@ -27,12 +32,12 @@ email1 aas_token
 email2 aas_token
 ```
 
-4. Build the project
+5. Build the project
 ```
-sh build.sh
+npm run build
 ```
 
-5. Run!!
+6. Run!!
 ```
 npm run dispenser
 
