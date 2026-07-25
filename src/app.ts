@@ -85,9 +85,15 @@ async function init() {
     console.log("Available Accounts: ", accounts.length)
   })
 
+  process.on("SIGINT", () => gracefullyExit())
+  process.on("SIGTERM", () => gracefullyExit())
   process.on("uncaughtException", (error) => {
     console.error("Uncaught exception:", error)
   })
+}
+
+function gracefullyExit() {
+  process.exit()
 }
 
 init()
