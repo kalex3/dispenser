@@ -7,7 +7,7 @@ COPY . .
 RUN --mount=type=cache,target=/root/.npm npm install --no-audit --no-fund
 
 RUN npm run compile-proto \
-    && npx tsc -p . --sourceMap false \
+    && npm run release \
     && cp -r resources dist/ \
     && npm prune --omit=dev --omit=optional \
     && npm cache clean --force \

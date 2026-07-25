@@ -7,8 +7,9 @@
   "license": "GPL-3.0-only",
   "scripts": {
     "dev": "tsx watch src/app.ts",
-    "build": "sh build.sh",
-    "cleanup": "sh cleanup.sh",
+    "build": "tsc -p .",
+    "release": "tsc -p . --sourceMap false",
+    "clean": "rm -rf dist",
     "dispenser": "node --max-old-space-size=4096 dist/app.js",
     "compile-proto": "pbjs -t static-module -w commonjs -d -o ./src/google_play.js ./google_play.proto"
   },
