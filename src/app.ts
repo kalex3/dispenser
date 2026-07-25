@@ -13,7 +13,6 @@ import fs from "fs"
 import helmet from "helmet"
 import morgan from "morgan"
 import path from "path"
-import pkg from "../package.json"
 import routes from "./routes"
 
 dotenv.config()
@@ -83,8 +82,6 @@ async function init() {
   const host = process.env.HOST || "localhost"
 
   app.listen(port, host, () => {
-    console.log(pkg.name)
-    console.log(`Version: ${pkg.version}`)
     console.log("Available Accounts: ", accounts.length)
   })
 
