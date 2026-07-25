@@ -27,8 +27,8 @@ COPY --from=builder /build/node_modules ./node_modules
 COPY --from=builder /build/dist ./
 
 RUN touch resources/accounts.txt \
-    && mkdir -p logs/access logs/blocked \
-    && chown -R node:node /app \
+    && mkdir -p /logs/access /logs/blocked \
+    && chown -R node:node /app /logs \
     && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /tmp/*
 
 USER node
